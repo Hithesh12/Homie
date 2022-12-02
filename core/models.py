@@ -4,9 +4,9 @@ from django.contrib.auth.models import AbstractUser
 # Create your models here.
 class User(AbstractUser):
     email = models.EmailField(unique=True)
-    created=models.DateTimeField()
+    created=models.DateTimeField(auto_now=True)
     created_by=models.CharField(max_length=255)
-    modified=models.DateTimeField()
+    modified=models.DateTimeField(auto_now=True)
     modified_by=models.CharField(max_length=255)
 
     USERNAME_FIELD = 'email'
