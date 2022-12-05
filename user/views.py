@@ -19,47 +19,89 @@ import structlog
 logger = structlog.get_logger(__name__)
 logger.info("an_error_occurred")
 
-#Add new user to the DB
+# Add new user to the DB
+
+
 @api_view(http_method_names=['post'])
 @permission_classes((AllowAny,))
 def registration(request):
-    logger.info("Enqueuing successful task")
-    if request.method == 'POST':
-        data = request.data
-        serializer = RegisterSerializer(data=data)
+    try:
+        logger.info("Enqueuing successful task")
+        if request.method == 'POST':
+            data = request.data
+            # Method to validate and save user to the DB
+            serializer = RegisterSerializer(data=data)
+            if serializer.is_valid():
+                validated_data = serializer.validated_data
+                user = User()
+                user.username = validated_data['username']
+                user.phone = validated_data['phone']
+                user.email = validated_data['email']
+                user.first_name = validated_data['first_name']
+                user.last_name = validated_data['last_name']
+                user.created_by = validated_data['username']
+                user.premium_user = validated_data['premium_user']
+                user.price = validated_data['price']
+                user.set_password(validated_data['password'])
+        # Validation for premium user
+                premium_user = validated_data['premium_user']
+                price = validated_data['price']
+                print(validated_data['phone'])
+                if premium_user is False:
+                    user.save()
+                    return Response(serializer.data)
+                elif premium_user is True and price is False:
+                    raise ValidationError('make payment')
+                elif premium_user is True and price is True:
+                    user.save()
+                    return Response(serializer.data)
 
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
-
+        logger.info(event=f'registered sucessfully-->(e)',
+                    method='register_user', status='sucess')
         return Response({'error': 'Please fill all the required field'}, status=HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        logger.info(event=f'registration failed',
+                    method='register_user', status='failed')
+        raise ValidationError({'error': f'(e)'})
+# Login and return token to the user
 
-#Login and return token to the user
+
 @csrf_exempt
 @api_view(["POST"])
 @permission_classes((AllowAny,))
 def login(request):
-    logger.info("Enqueuing successful task")
-    email = request.data.get("email")
-    password = request.data.get("password")
-    if email is None or password is None:
-        return Response({'error': 'Please provide both username and password'},
-                        status=HTTP_400_BAD_REQUEST)
-    user = authenticate(email=email, password=password)
+    try:
+        logger.info("Enqueuing successful task")
+        email = request.data.get("email")
+        password = request.data.get("password")
+        if email is None or password is None:
+            return Response({'error': 'Please provide both username and password'},
+                            status=HTTP_400_BAD_REQUEST)
+        user = authenticate(email=email, password=password)
 
-    if user is None:
-        return Response({'error': 'Invalid Credentials'},
-                        status=HTTP_404_NOT_FOUND)
-    token, _ = Token.objects.get_or_create(user=user)
-    register = User.objects.get(email=email)
-    serializer = RegisterSerializer(register)
-    user_data = {
-        'token': token.key,
-        'user': serializer.data
-    }
-    return Response(user_data, status=HTTP_200_OK)
+        if user is None:
+            return Response({'error': 'Invalid Credentials'},
+                            status=HTTP_404_NOT_FOUND)
+        token, _ = Token.objects.get_or_create(user=user)
+        register = User.objects.get(email=email)
+        serializer = RegisterSerializer(register)
+        user_data = {
+            'token': token.key,
+            'user': serializer.data
+        }
+        logger.info(event=f'logged sucessfully-->(e)',
+                    method='login_user', status='sucess')
+        return Response(user_data, status=HTTP_200_OK)
+    except Exception as e:
+        logger.info(event=f'login failed',
+                    method='login_user', status='failed')
+        raise ValidationError({'error': f'(e)'})
+# Display all the user in the DB
 
-#Display all the user in the DB
+
 @api_view(http_method_names=["get"])
 def userlist(request):
     logger.info("Enqueuing successful task")
@@ -68,46 +110,54 @@ def userlist(request):
         serializer = UserListSerializer(queryset, many=True)
         return Response(serializer.data)
 
-#Fetch a particullar user by id and display,update,delete the data from DB
+
+# Fetch a particullar user by id and display,update,delete the data from DB
 @api_view(http_method_names=["get", "delete", "put"])
 @authentication_classes([MyAuthentication])
 def edit(request):
     try:
-        user = User.objects.get(id=request.user.id)
-    except User.DoesNotExist:
-        raise ValidationError("user doesnot exist")
-    logger.info(f'USER-->{request.user.id}')
+        try:
+            user = User.objects.get(id=request.user.id)
+        except User.DoesNotExist:
+            raise ValidationError("user doesnot exist")
+        logger.info(f'USER-->{request.user.id}')
 
-    if request.method == 'GET':
-        serializer = EditSerializer(user)
-        return Response(serializer.data)
-    
-    elif request.method == 'PUT':
-        data = request.data
-        user.username = data['username']
-        user.first_name = data['first_name']
-        user.last_name = data['last_name']
-        user.email = data['email']
-        user.phone = data['phone']
-        user.modified_by = data['username']
-#update the membership from normal user to premium user
-        user.premium_user=data['premium_user']
-        user.price=data['price']
+        if request.method == 'GET':
+            serializer = EditSerializer(user)
+            return Response(serializer.data)
 
-        premium_user=data['premium_user']
-        price=data['price']
-        if premium_user is False:
+        elif request.method == 'PUT':
+
+            data = request.data
+            user.username = data['username']
+            user.first_name = data['first_name']
+            user.last_name = data['last_name']
+            user.email = data['email']
+            user.phone = data['phone']
+            user.modified_by = data['username']
+        # update the membership from normal user to premium user
+            user.premium_user = data['premium_user']
+            user.price = data['price']
+
+            premium_user = data['premium_user']
+            price = data['price']
+            if premium_user is False:
                 user.save()
                 return Response('sucesfull')
 
-        elif premium_user is True and price is False:
+            elif premium_user is True and price is False:
                 raise ValidationError('make payment')
-                
-        elif premium_user is True and price is True:
+
+            elif premium_user is True and price is True:
                 user.save()
-        return Response('sucesfull')
-        
-    elif request.method == 'DELETE':
-        Token.objects.get(user=user).delete()
-        user.delete()
-        return Response(f"deleted sucesfully")
+            return Response('sucesfull')
+
+        elif request.method == 'DELETE':
+            Token.objects.get(user=user).delete()
+            user.delete()
+            logger.info(event=f'sucessfully-->(e)',
+                        method='edit_user', status='sucess')
+            return Response(f"deleted sucesfully")
+    except Exception as e:
+        logger.info(event=f'failed', method='edit_user', status='failed')
+        raise ValidationError({'error': f'(e)'})
