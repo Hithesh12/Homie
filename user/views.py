@@ -143,4 +143,4 @@ def edit(request):
             return Response(f"deleted sucesfully")
     except Exception as e:
         logger.info(event=f'failed', method='edit_user', status='failed')
-        raise ValidationError({'error': f'(e)'})
+        raise ValidationError({'error': f'(e)',})
