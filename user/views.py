@@ -3,7 +3,7 @@ from django.contrib.auth import authenticate
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny,IsAdminUser
 from rest_framework.exceptions import ValidationError
 from rest_framework.status import (
     HTTP_400_BAD_REQUEST,
@@ -11,17 +11,17 @@ from rest_framework.status import (
     HTTP_200_OK
 )
 from rest_framework.response import Response
+from .helper import check,check_premium_update
 from core.authentication import MyAuthentication
 from core.models import User
 from .serializers import RegisterSerializer, UserListSerializer, EditSerializer
 import structlog
 
+
 logger = structlog.get_logger(__name__)
 logger.info("an_error_occurred")
 
 # Add new user to the DB
-
-
 @api_view(http_method_names=['post'])
 @permission_classes((AllowAny,))
 def registration(request):
@@ -44,31 +44,23 @@ def registration(request):
                 user.price = validated_data['price']
                 user.set_password(validated_data['password'])
         # Validation for premium user
-                premium_user = validated_data['premium_user']
-                price = validated_data['price']
-                print(validated_data['phone'])
-                if premium_user is False:
-                    user.save()
-                    return Response(serializer.data)
-                elif premium_user is True and price is False:
-                    raise ValidationError('make payment')
-                elif premium_user is True and price is True:
-                    user.save()
-                    return Response(serializer.data)
+                user.check=check(validated_data['price'],validated_data['premium_user'],user,serializer)
 
         if serializer.is_valid():
-            serializer.save()
+            user.save()
             return Response(serializer.data)
+
         logger.info(event=f'registered sucessfully-->(e)',
                     method='register_user', status='sucess')
         return Response({'error': 'Please fill all the required field'}, status=HTTP_400_BAD_REQUEST)
+   
     except Exception as e:
         logger.info(event=f'registration failed',
                     method='register_user', status='failed')
         raise ValidationError({'error': f'(e)'})
+
+
 # Login and return token to the user
-
-
 @csrf_exempt
 @api_view(["POST"])
 @permission_classes((AllowAny,))
@@ -99,10 +91,11 @@ def login(request):
         logger.info(event=f'login failed',
                     method='login_user', status='failed')
         raise ValidationError({'error': f'(e)'})
+
+
 # Display all the user in the DB
-
-
 @api_view(http_method_names=["get"])
+@permission_classes((IsAdminUser,))
 def userlist(request):
     logger.info("Enqueuing successful task")
     if request.method == 'GET':
@@ -138,19 +131,9 @@ def edit(request):
         # update the membership from normal user to premium user
             user.premium_user = data['premium_user']
             user.price = data['price']
-
-            premium_user = data['premium_user']
-            price = data['price']
-            if premium_user is False:
-                user.save()
-                return Response('sucesfull')
-
-            elif premium_user is True and price is False:
-                raise ValidationError('make payment')
-
-            elif premium_user is True and price is True:
-                user.save()
-            return Response('sucesfull')
+            user.check=check_premium_update(data['price'],data['premium_user'],user)
+            return Response('sucessfull')
+            
 
         elif request.method == 'DELETE':
             Token.objects.get(user=user).delete()
