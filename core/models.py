@@ -27,10 +27,16 @@ class Friend_Request(models.Model):
     friends=models.BooleanField(default=False)
 
 class Post(models.Model):
-    user=models.ForeignKey(User,on_delete=models.CASCADE)
+    user=models.ForeignKey(User,on_delete=models.CASCADE,related_name='posts')
     title=models.CharField(max_length=255)
     text=models.TextField(max_length=255)
     post=models.DateTimeField(auto_now_add=True)
+
+class Like(models.Model):
+    likeuser=models.ManyToManyField(User)
+    likepost=models.ForeignKey(Post,on_delete=models.CASCADE,null=True,related_name='likepost')
+    time=models.DateTimeField(auto_now_add=True)
+
 
 
     

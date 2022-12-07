@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
+import structlog
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -25,7 +26,7 @@ SECRET_KEY = 'django-insecure-%-ej15n6vop-g)t9_ah@5j^%-oh^wqv+m8!sqr-6@arr*2fcbh
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['31a6-61-246-81-34.in.ngrok.io',]
 
 
 # Application definition
@@ -45,14 +46,18 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-     'django_structlog.middlewares.RequestMiddleware',
+    'django_structlog.middlewares.RequestMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+
+CORS_ORIGIN_ALLOW_ALL = True
 
 ROOT_URLCONF = 'Task.urls'
 
@@ -138,12 +143,11 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.BasicAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     ],
-    'DEFAULT_PERMISSION_CLASSES':[ 
+    'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated'
     ]
 }
 
-import structlog
 
 LOGGING = {
     "version": 1,
@@ -167,7 +171,7 @@ LOGGING = {
             "class": "logging.StreamHandler",
             "formatter": "plain_console",
         },
-      
+
     },
     "loggers": {
         "": {
