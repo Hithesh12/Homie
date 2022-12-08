@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-%-ej15n6vop-g)t9_ah@5j^%-oh^wqv+m8!sqr-6@arr*2fcbh
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['31a6-61-246-81-34.in.ngrok.io',]
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -45,19 +45,21 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django_structlog.middlewares.RequestMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+CORS_ALLOWED_ORIGINS=[]
 
-CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOWED_ORIGIN_REGEXES =[]
+CORS_ORIGIN_ALLOW_ALL = True    
 
 ROOT_URLCONF = 'Task.urls'
 

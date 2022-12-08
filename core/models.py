@@ -14,6 +14,8 @@ class User(AbstractUser):
     premium_user=models.BooleanField(default=False)
     price=models.BooleanField(default=False)
     friends=models.ManyToManyField("User",blank=True)
+  
+   
     
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name', 'phone']
@@ -31,11 +33,8 @@ class Post(models.Model):
     title=models.CharField(max_length=255)
     text=models.TextField(max_length=255)
     post=models.DateTimeField(auto_now_add=True)
+    like=models.ManyToManyField(User,related_name='post')
 
-class Like(models.Model):
-    likeuser=models.ManyToManyField(User)
-    likepost=models.ForeignKey(Post,on_delete=models.CASCADE,null=True,related_name='likepost')
-    time=models.DateTimeField(auto_now_add=True)
 
 
 
