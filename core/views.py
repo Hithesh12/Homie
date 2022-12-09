@@ -29,11 +29,12 @@ def friends(request):
 
             if data['friend_user'] is None:
                 return Response('no friend request sent')
-
-            else:
-                friend_Request.friends = True
-                friend_Request.save()
-                return Response(f'friends {friend_Request.friends}')
+            elif friend_Request.friend_user_id == data['friend_user']:
+                return Response('already friends')
+        
+            friend_Request.friends = True
+            friend_Request.save()
+            return Response(f'friends {friend_Request.friends}')
 
         elif request.method == 'GET':
             queryset = Friend_Request.objects.filter(
