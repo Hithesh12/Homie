@@ -34,9 +34,16 @@ class Post(models.Model):
     text=models.TextField(max_length=255)
     post=models.DateTimeField(auto_now_add=True)
     like=models.ManyToManyField(User,related_name='post')
-
-
-
-
     
+def nameFile(instance, filename):
+    return '/'.join(['images', str(instance.name), filename])
 
+class UploadImageTest(models.Model):
+    user=models.ForeignKey(User,on_delete=models.CASCADE,related_name='image')
+    name = models.CharField(max_length=100)
+    image = models.ImageField(upload_to='store/file',blank=True, null=True)
+    likes=models.ManyToManyField(User,related_name='likes')
+
+class ProfileUser(models.Model):
+    user=models.ForeignKey(User,on_delete=models.CASCADE,related_name='data')
+    profilepic = models.ImageField(upload_to='store/file',blank=True, null=True)
